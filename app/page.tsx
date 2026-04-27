@@ -89,6 +89,7 @@ export default function TailorPage() {
       setStep('landing')
       setResultNotice(null)
       db.sessions.orderBy('updatedAt').reverse().limit(10).toArray().then(setSessions)
+      checkApiUsage(sessionId).then(setUsageStatus)
     }
     window.addEventListener('tailor:go-home', handler)
     return () => window.removeEventListener('tailor:go-home', handler)
@@ -123,6 +124,7 @@ export default function TailorPage() {
       return
     }
     await incrementUsage(sessionId)
+    checkApiUsage(sessionId).then(setUsageStatus)
     setStep('tailoring')
   }
 
