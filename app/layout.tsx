@@ -14,7 +14,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { DevModelPanel } from '@/components/DevModelPanel'
-import { NavLogo } from '@/components/NavLogo'
+import { NavLogo, NavHomeLink } from '@/components/NavLogo'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={`${GeistSans.variable} ${GeistMono.variable} ${dmSerif.variable}`}>
+    <html lang="en" data-theme="light" className={`${GeistSans.variable} ${GeistMono.variable} ${dmSerif.variable}`}>
       <body>
         <ThemeProvider>
           <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <nav className="site-nav" aria-label="Site navigation">
-                    <a href="https://www.vishalbuilds.com/">Home</a>
+                    <NavHomeLink />
                     <a href="https://www.vishalbuilds.com/#projects">Products</a>
                   </nav>
                   <span className="nav-shield nav-desktop">

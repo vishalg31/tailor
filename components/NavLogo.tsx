@@ -1,10 +1,23 @@
 'use client'
 
+function goHome() {
+  localStorage.removeItem('tailor_restore')
+  window.dispatchEvent(new CustomEvent('tailor:go-home'))
+}
+
+export function NavHomeLink() {
+  return (
+    <button
+      onClick={goHome}
+      className="site-nav-home"
+    >
+      Home
+    </button>
+  )
+}
+
 export function NavLogo() {
-  const handleClick = () => {
-    localStorage.removeItem('tailor_restore')
-    window.dispatchEvent(new CustomEvent('tailor:go-home'))
-  }
+  const handleClick = goHome
 
   return (
     <button

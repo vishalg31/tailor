@@ -12,6 +12,8 @@ const EXCLUDE = [
   '.env.local',
   'CV sample',
   'CLAUDE.md',
+  'STATUS.md',
+  'gemini api.csv',
   'tsconfig.tsbuildinfo',
   '.git',
 ]
