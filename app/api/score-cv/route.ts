@@ -53,8 +53,9 @@ SCORING RUBRIC (100 points total):
    - Same skills in roles older than 5 years score minimal points
 
 4. Qualifications Match (10 points)
-   - Years of experience vs stated requirement
+   - Years of experience vs stated requirement: meeting OR exceeding the requirement scores full points — more experience is never a penalty
    - Education or certifications if explicitly required in JD
+   - Only deduct points if the candidate falls SHORT of stated minimums
 
 SCORE LABELS:
 0–50: Weak Match

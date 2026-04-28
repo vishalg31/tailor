@@ -15,6 +15,7 @@ const EXCLUDE = [
   'STATUS.md',
   'LEARNINGS.md',
   'token-usage.csv',
+  'vercel-stats.js',
   'gemini api.csv',
   'tsconfig.tsbuildinfo',
   '.git',
