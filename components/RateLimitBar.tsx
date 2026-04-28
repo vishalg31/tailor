@@ -49,7 +49,7 @@ export function RateLimitBar({ status }: Props) {
         }}
       >
         <p style={{ fontSize: 13, color: 'var(--error)', margin: 0 }}>
-          You&apos;ve made 5 tailoring calls this session. Refresh the page to continue.
+          You&apos;ve reached your tailoring limit for today. Come back tomorrow — your sessions are saved.
         </p>
       </div>
     )

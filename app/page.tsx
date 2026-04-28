@@ -356,7 +356,7 @@ export default function TailorPage() {
                 </div>
 
                 <ParseLimitIndicator status={parseUsageStatus} />
-                <DropZone onFileAccepted={handleFileAccepted} />
+                <DropZone onFileAccepted={handleFileAccepted} disabled={parseUsageStatus?.status === 'session_blocked'} />
                 {parseError && (
                   <p style={{ fontSize: 12, color: 'var(--error)', marginTop: 8 }}>{parseError}</p>
                 )}
@@ -411,7 +411,7 @@ export default function TailorPage() {
 
                   <RateLimitBar status={usageStatus} />
                   <ParseLimitIndicator status={parseUsageStatus} />
-                  <DropZone onFileAccepted={handleFileAccepted} />
+                  <DropZone onFileAccepted={handleFileAccepted} disabled={parseUsageStatus?.status === 'session_blocked'} />
                   {parseError && (
                     <p style={{ fontSize: 12, color: 'var(--error)', marginTop: 8 }}>{parseError}</p>
                   )}
@@ -624,6 +624,21 @@ function ParseLimitIndicator({ status }: { status: import('@/lib/checkApiUsage')
       <p style={{ fontSize: 12, color: 'var(--warning)', marginBottom: 8 }}>
         {status.remainingToday} CV parse{status.remainingToday !== 1 ? 's' : ''} left this session — limit resets at {getResetTimeLocal()}.
       </p>
+    )
+  }
+  if (status.status === 'session_blocked') {
+    return (
+      <div style={{
+        background: 'var(--error-bg)',
+        border: '1px solid var(--error)',
+        borderRadius: 6,
+        padding: '10px 14px',
+        marginBottom: 12,
+      }}>
+        <p style={{ fontSize: 13, color: 'var(--error)', margin: 0 }}>
+          You&apos;ve reached your CV parse limit for this session. Come back tomorrow — your sessions are saved.
+        </p>
+      </div>
     )
   }
   return null

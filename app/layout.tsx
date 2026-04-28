@@ -11,6 +11,7 @@ const gelasio = Gelasio({
   display: 'swap',
 })
 import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { DevModelPanel } from '@/components/DevModelPanel'
 import { NavBar } from '@/components/NavBar'
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </ThemeProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
