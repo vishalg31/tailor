@@ -13,6 +13,7 @@ const EXCLUDE = [
   'CV sample',
   'CLAUDE.md',
   'STATUS.md',
+  'LEARNINGS.md',
   'gemini api.csv',
   'tsconfig.tsbuildinfo',
   '.git',

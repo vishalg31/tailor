@@ -7,7 +7,7 @@ import { RateLimitBar } from './RateLimitBar'
 import type { ApiUsageStatus } from '@/lib/checkApiUsage'
 
 const MIN_WORDS = 50
-const MAX_WORDS = 5000
+const MAX_WORDS = 2000
 
 interface Props {
   jdText: string
@@ -32,7 +32,7 @@ export function JDInput({ jdText, onChange, onTailor, sessionId, onBack }: Props
       return
     }
     if (count > MAX_WORDS) {
-      setWordErr(`Job description exceeds 5,000 words. Please trim it down.`)
+      setWordErr(`Job description exceeds 2,000 words. Please trim it down.`)
       return
     }
     setWordErr(null)
@@ -72,7 +72,7 @@ export function JDInput({ jdText, onChange, onTailor, sessionId, onBack }: Props
               {count} words {count < MIN_WORDS && `(min ${MIN_WORDS})`}
             </p>
         }
-        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: 0 }}>max 5,000 words</p>
+        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', margin: 0 }}>max 2,000 words</p>
       </div>
 
       <RateLimitBar status={usageStatus} />

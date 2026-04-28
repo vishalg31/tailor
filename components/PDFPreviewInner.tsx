@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { PDFViewer, PDFDownloadLink, pdf } from '@react-pdf/renderer'
 import { ResumeDocument } from './ResumeTemplate'
 import type { ResumeJSONType, TailoredJSONType } from '@/lib/schema'
+import { InfoTip } from '@/components/InfoTip'
 
 interface Props {
   resumeJson: ResumeJSONType
@@ -35,24 +36,27 @@ function useOverflowDetect(resumeJson: ResumeJSONType, tailoredJson: TailoredJSO
 function PDFDownloadButtonCore({ resumeJson, tailoredJson, compact }: Props & { compact: boolean }) {
   const filename = `${resumeJson.name.replace(/\s+/g, '_')}_tailored.pdf`
   return (
-    <PDFDownloadLink
-      document={<ResumeDocument resumeJson={resumeJson} tailoredJson={tailoredJson} compact={compact} />}
-      fileName={filename}
-      style={{
-        display: 'inline-block',
-        padding: '10px 20px',
-        background: 'var(--accent)',
-        color: '#fff',
-        borderRadius: 7,
-        fontSize: 13,
-        fontWeight: 600,
-        textDecoration: 'none',
-        minHeight: 44,
-        lineHeight: '24px',
-      }}
-    >
-      {({ loading }) => loading ? 'Preparing PDF...' : 'Download PDF'}
-    </PDFDownloadLink>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <PDFDownloadLink
+        document={<ResumeDocument resumeJson={resumeJson} tailoredJson={tailoredJson} compact={compact} />}
+        fileName={filename}
+        style={{
+          display: 'inline-block',
+          padding: '10px 20px',
+          background: 'var(--accent)',
+          color: '#fff',
+          borderRadius: 7,
+          fontSize: 13,
+          fontWeight: 600,
+          textDecoration: 'none',
+          minHeight: 44,
+          lineHeight: '24px',
+        }}
+      >
+        {({ loading }) => loading ? 'Preparing PDF...' : 'Download PDF'}
+      </PDFDownloadLink>
+      <InfoTip text="Generates a formatted PDF of your tailored CV using your original layout. Ready to submit to employers." />
+    </span>
   )
 }
 

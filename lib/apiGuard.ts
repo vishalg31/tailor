@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 
 // Max input sizes — prevents prompt-stuffing / token abuse
-export const MAX_JD_CHARS = 30_000   // ~5 000 words
+export const MAX_JD_CHARS = 12_000   // ~2 000 words
 export const MAX_CV_CHARS = 50_000   // generous CV text limit
 
 function buildAllowedOrigins(): string[] {

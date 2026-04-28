@@ -8,23 +8,42 @@ import { isAllowedOrigin, originDenied } from '@/lib/apiGuard'
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-const PARSE_PROMPT = (text: string) => `You are a CV parser. Extract information from this CV text and return ONLY valid JSON — no markdown, no explanation, no code fences.
+const PARSE_PROMPT = (text: string) => `You are a precise CV data extraction engine. Your only job is to extract structured data from the raw CV text below and return it as valid JSON matching the exact schema provided.
 
-Return this exact JSON shape:
+RULES:
+- Return ONLY valid JSON. No markdown, no code fences, no explanation.
+- Extract data exactly as written — do not rephrase, summarise, or improve any content. That happens later.
+- If a field is not present in the CV, return null for optional fields or an empty array for array fields. Never invent data.
+- For experience bullets: extract each bullet or sentence as a separate string in the bullets array. Preserve the original wording exactly.
+- For multiple roles at the same company, create separate experience entries — one per role.
+- Dates: extract as written (e.g. "Jan 2021", "2019", "Present")
+- If the CV has a summary or objective section, extract it verbatim.
+
+SCHEMA TO MATCH:
 {
   "name": string,
   "email": string,
-  "phone": string or omit if missing,
-  "location": string or omit if missing,
-  "linkedin": string or omit if missing,
-  "summary": string or omit if missing,
-  "experience": [{ "company": string, "title": string, "startDate": string, "endDate": string, "bullets": string[] }],
-  "education": [{ "institution": string, "degree": string, "year": string }],
+  "phone": string | null,
+  "location": string | null,
+  "linkedin": string | null,
+  "summary": string | null,
+  "experience": [{
+    "company": string,
+    "title": string,
+    "startDate": string,
+    "endDate": string,
+    "bullets": string[]
+  }],
+  "education": [{
+    "institution": string,
+    "degree": string,
+    "year": string
+  }],
   "skills": string[],
-  "certifications": string[] or omit if none
+  "certifications": string[]
 }
 
-CV Text:
+CV TEXT:
 ${text}`
 
 export async function POST(req: NextRequest) {

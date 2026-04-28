@@ -113,7 +113,7 @@ export function ResumeDocument({ resumeJson, tailoredJson, compact }: Props) {
   const bulletRowStyle = compact ? [s.bulletRow, { marginBottom: 1 }] : s.bulletRow
   const bulletDotStyle = compact ? [s.bulletDot, { fontSize: 9 }] : s.bulletDot
   const bulletTextStyle = compact ? [s.bulletText, { fontSize: 9 }] : s.bulletText
-  const roleBlockStyle = compact ? { marginBottom: 4 } : { marginBottom: 6 }
+  const roleBlockStyle = compact ? { marginBottom: 2 } : { marginBottom: 4 }
 
   return (
     <Document>

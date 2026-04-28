@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { timeAgo } from '@/lib/utils'
 import { db } from '@/lib/db'
 import type { SessionRecord } from '@/lib/db'
+import { InfoTip } from '@/components/InfoTip'
 
 interface Props {
   sessions: SessionRecord[]
@@ -118,12 +119,15 @@ export function SessionDashboard({ sessions, onResume, onDelete, onRename }: Pro
                       {expandedJdId === s.sessionId ? 'Hide JD ▲' : 'View JD ▼'}
                     </button>
                   )}
-                  <button
-                    onClick={() => exportSession(s)}
-                    style={{ fontSize: 11, color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-                  >
-                    Export
-                  </button>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <button
+                      onClick={() => exportSession(s)}
+                      style={{ fontSize: 11, color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                    >
+                      Export
+                    </button>
+                    <InfoTip text="Downloads your parsed CV as a JSON file. Use it to restore your CV on another device without re-uploading." />
+                  </span>
                   {confirmDeleteId === s.sessionId ? (
                     <button
                       onClick={() => { onDelete(s); setConfirmDeleteId(null) }}

@@ -28,73 +28,71 @@ function parseRetry(err: unknown): number | null {
   return 4000 // default short wait for unknown 429s
 }
 
-const ATS_SCORING_PROMPT = (cvText: string, jdText: string, includeSuggestions: boolean) => `
-You are simulating an enterprise ATS (Applicant Tracking System) scoring engine like Workday, Greenhouse, or Lever.
+const ATS_SCORING_PROMPT = (cvText: string, jdText: string) => `You are simulating an enterprise ATS (Applicant Tracking System) scoring engine like Workday, Greenhouse, or Lever.
 
-Score the following CV against the job description using ONLY these criteria:
+IMPORTANT CONTEXT:
+- You are scoring a CV that has already been tailored for this specific JD. Be honest and calibrated — do not inflate scores because the CV was AI-tailored.
+- A score above 85 should only be awarded if the CV genuinely covers the majority of hard requirements in the JD.
+- Scores can reach 100 for exceptional alignment but this is rare.
 
-SCORING RUBRIC (total 100 points):
+SCORING RUBRIC (100 points total):
 
 1. Hard Keyword Match (50 points)
-   - Exact and semantic matches of technical skills, tools, software, methodologies, certifications, and job titles
+   - Exact and semantic matches of technical skills, tools, software, methodologies, certifications, job titles
    - Partial credit for related terms
-   - IGNORE soft skills like "leadership", "communication", "collaborative"
+   - IGNORE all soft skills — "leadership", "communication", "collaborative" carry zero weight
 
 2. Job Scope Alignment (25 points)
-   - Seniority level match (Senior PM vs APM vs Director)
-   - Functional domain match (B2B, logistics, marketplace, fintech etc.)
-   - Team/org scale match (startup vs enterprise)
+   - Seniority level match (APM vs Senior PM vs Director)
+   - Functional domain match (B2B, fintech, marketplace etc.)
+   - Org scale match (startup vs growth vs enterprise)
 
 3. Recency of Relevant Experience (15 points)
-   - Matching skills in the most recent 1-2 roles score higher
-   - Current role relevance weighted most heavily
+   - Matching skills in most recent 1–2 roles score highest
+   - Same skills in roles older than 5 years score minimal points
 
 4. Qualifications Match (10 points)
-   - Years of experience matches stated requirement
-   - Education or certifications match if explicitly required
+   - Years of experience vs stated requirement
+   - Education or certifications if explicitly required in JD
 
-SCORING SCALE:
-- 0-50: Weak Match
-- 51-70: Moderate Match
-- 71-85: Strong Match
-- 86-95: Excellent Match
-- 96-100: Exceptional Match (reserved for near-perfect alignment)
+SCORE LABELS:
+0–50: Weak Match
+51–70: Moderate Match
+71–85: Strong Match
+86–95: Excellent Match
+96–100: Exceptional Match
 
-IMPORTANT RULES:
-- Scores can reach 100 for a genuinely exceptional match
-- Do not inflate — be calibrated and honest
-- Missing a required hard skill should meaningfully drop the score
-- Soft skills carry zero weight
+RULES:
+- Be calibrated — missing a required hard skill must drop the score
+- Do not reward keyword density over genuine relevance
+- Soft skills carry zero weight in this system
+
+Return ONLY valid JSON, no markdown, no preamble:
+{
+  "totalScore": number,
+  "scoreLabel": string,
+  "breakdown": {
+    "hardKeywords": { "score": number, "explanation": string },
+    "jobScope": { "score": number, "explanation": string },
+    "recency": { "score": number, "explanation": string },
+    "qualifications": { "score": number, "explanation": string }
+  },
+  "matchedKeywords": string[],
+  "missingKeywords": string[],
+  "placementSuggestions": [{ "keyword": string, "suggestion": string }]
+}
 
 CV:
 ${cvText}
 
 JOB DESCRIPTION:
-${jdText}
-
-Return ONLY a valid JSON object, no preamble, no markdown, no backticks:
-{
-  "totalScore": <number 0-100>,
-  "scoreLabel": "<Weak Match | Moderate Match | Strong Match | Excellent Match | Exceptional Match>",
-  "breakdown": {
-    "hardKeywords": { "score": <number 0-50>, "explanation": "<one line>" },
-    "jobScope": { "score": <number 0-25>, "explanation": "<one line>" },
-    "recency": { "score": <number 0-15>, "explanation": "<one line>" },
-    "qualifications": { "score": <number 0-10>, "explanation": "<one line>" }
-  },
-  "matchedKeywords": ["<keyword>"],
-  "missingKeywords": ["<hard skill keyword only — technical tools, software, methodologies, domain terms, certifications. Exclude all soft skills, personality traits, abstract qualities, and generic descriptors>"]${includeSuggestions ? `,
-  "placementSuggestions": [
-    { "keyword": "<copy the keyword exactly as it appears in missingKeywords>", "suggestion": "<one sentence under 20 words: where in the CV to naturally work in this keyword>" }
-  ]` : ''}
-}
-`
+${jdText}`
 
 export async function POST(req: NextRequest) {
   if (!isAllowedOrigin(req)) return originDenied()
 
   try {
-    const { cvText, jdText, includeSuggestions = false, devModel } = await req.json()
+    const { cvText, jdText, devModel } = await req.json()
     const modelToUse = (process.env.NODE_ENV !== 'production' && devModel) ? devModel : MODELS.scoring
     if (!cvText || !jdText) {
       return NextResponse.json({ error: 'Missing cvText or jdText' }, { status: 400 })
@@ -106,7 +104,7 @@ export async function POST(req: NextRequest) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
     const runScore = (modelName: string) =>
-      genAI.getGenerativeModel({ model: modelName }).generateContent(ATS_SCORING_PROMPT(cvText, jdText, includeSuggestions))
+      genAI.getGenerativeModel({ model: modelName }).generateContent(ATS_SCORING_PROMPT(cvText, jdText))
 
     console.log('[score-cv] Trying primary:', modelToUse)
     let result

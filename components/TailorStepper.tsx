@@ -102,7 +102,18 @@ export function TailorStepper({ resumeJson, jdText, onComplete, onError }: Props
         throw new Error('Tailoring timed out. Your CV and job description are saved — hit Try Again to retry.')
       }
 
-      const tailoredJson = validated.data
+      // Safety net: fill any bullets the model dropped with the originals
+      const tailoredJson = {
+        ...validated.data,
+        tailoredExperience: validated.data.tailoredExperience.map((exp, idx) => {
+          const originalExp = resumeJson.experience[idx]
+          if (!originalExp) return exp
+          const safeBullets = originalExp.bullets.map(
+            (origBullet, bi) => exp.bullets[bi] ?? origBullet
+          )
+          return { ...exp, bullets: safeBullets }
+        }),
+      }
 
       // Step 2 — score original then tailored (sequential to avoid burst 429s)
       const originalCvText = resumeToText(resumeJson)

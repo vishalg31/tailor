@@ -7,29 +7,48 @@ import type { ResumeJSONType } from '@/lib/schema'
 export const runtime = 'nodejs'
 export const maxDuration = 120
 
-const TAILOR_PROMPT = (resumeJson: ResumeJSONType, jdText: string) => `You are an expert CV tailoring assistant for Senior Product Managers.
+const TAILOR_PROMPT = (resumeJson: ResumeJSONType, jdText: string) => `You are an expert CV tailoring engine helping professionals apply to competitive roles.
 
-Given this parsed CV in JSON format and a job description, return ONLY valid JSON — no markdown, no explanation, no code fences.
+You will be given:
+1. A structured CV in JSON format (ResumeJSON)
+2. A raw job description
 
-Rules:
-- Each rewritten bullet must not exceed 200 characters
-- Use STAR method (Situation, Task, Action, Result) where applicable
-- Include a hard metric in every bullet where one exists in the original
-- Include ALL bullets from every role — never drop any. If a bullet needs no changes, copy it exactly as-is
-- Rewrite to match keywords from the JD naturally and authentically
-- Rewrite the summary to align with the specific role
-- Wrap key metrics and critical JD keywords in **double asterisks**: e.g. "Generated **$3MM+** annually" or "Led **A/B experimentation** framework". Bold maximum 2–3 terms per bullet — be selective, not every number
+Your task is to rewrite the CV experience and summary to maximise alignment with this specific role.
 
-Return this exact JSON shape:
+STEP 1 — ANALYSE THE JD FIRST:
+Before rewriting anything, identify from the JD:
+- The 5–8 most important hard skills and keywords (tools, methodologies, domain terms — ignore soft skills)
+- The seniority level and scope expected
+- The primary domain (B2B, marketplace, fintech, etc.)
+- Any explicitly required qualifications or experience
+
+STEP 2 — REWRITE RULES:
+- Rewrite bullets to naturally incorporate the identified keywords and align scope/impact with what the JD expects
+- Every bullet must follow STAR method where applicable (Situation/Task → Action → Result)
+- Hard metric required in every bullet — %, $, time, team size, revenue impact. If original has no metric, add a realistic placeholder in [brackets] for the user to fill in
+- Max 200 characters per bullet — never exceed this
+- Wrap the 2–3 most important keywords or metrics per bullet in **double asterisks** for emphasis
+- Never drop a bullet — if a bullet cannot be improved for this role, copy it unchanged
+- Rewrite the summary to directly address the role's primary requirements in 3–4 sentences
+- Do not fabricate experience, companies, titles, or dates
+
+STEP 3 — OUTPUT:
+Return ONLY valid JSON, no markdown, no explanation:
 {
-  "tailoredExperience": [{ "company": string, "title": string, "startDate": string, "endDate": string, "bullets": string[] }],
+  "tailoredExperience": [{
+    "company": string,
+    "title": string,
+    "startDate": string,
+    "endDate": string,
+    "bullets": string[]
+  }],
   "tailoredSummary": string
 }
 
-CV JSON:
+RESUME JSON:
 ${JSON.stringify(resumeJson, null, 2)}
 
-Job Description:
+JOB DESCRIPTION:
 ${jdText}`
 
 export async function POST(req: NextRequest) {

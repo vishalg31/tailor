@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { ResumeJSONType, TailoredJSONType, ATSScoreType } from '@/lib/schema'
 import { stripBold } from '@/lib/utils'
+import { InfoTip } from '@/components/InfoTip'
 
 interface Props {
   resumeJson: ResumeJSONType
@@ -93,6 +94,7 @@ export function SniperView({ resumeJson, tailoredJson, originalScore, tailoredSc
                 bullets={tailored.bullets.map(stripBold)}
                 isAfter={true}
                 originalBullets={original.bullets}
+                matchedKeywords={tailoredScore?.matchedKeywords}
               />
             </div>
 
@@ -109,6 +111,7 @@ export function SniperView({ resumeJson, tailoredJson, originalScore, tailoredSc
                       bullet={stripBold(tailored.bullets[bi] ?? origBullet)}
                       original={origBullet}
                       isAfter={true}
+                      matchedKeywords={tailoredScore?.matchedKeywords}
                     />
                   </div>
                 </div>
@@ -190,9 +193,9 @@ function MatchScore({ originalScore, tailoredScore }: {
                 </div>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', minWidth: 40, textAlign: 'right' }}>
                   {tail}<span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>/{maxScore}</span>
-                  {delta > 0 && d !== 0 && (
-                    <span style={{ fontSize: 10, fontWeight: 700, color: d > 0 ? 'var(--accent)' : 'var(--error)', marginLeft: 5 }}>
-                      {d > 0 ? '+' : ''}{d}
+                  {delta > 0 && d > 0 && (
+                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', marginLeft: 5 }}>
+                      +{d}
                     </span>
                   )}
                 </span>
@@ -244,11 +247,12 @@ function MatchScore({ originalScore, tailoredScore }: {
 }
 
 /* ── Bullets column ───────────────────────────────────────── */
-function BulletsColumn({ label, bullets, isAfter, originalBullets }: {
+function BulletsColumn({ label, bullets, isAfter, originalBullets, matchedKeywords }: {
   label: string
   bullets: string[]
   isAfter: boolean
   originalBullets?: string[]
+  matchedKeywords?: string[]
 }) {
   const [copiedAll, setCopiedAll] = useState(false)
 
@@ -267,12 +271,15 @@ function BulletsColumn({ label, bullets, isAfter, originalBullets }: {
         <span style={{ fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           {label}
         </span>
-        <button
-          onClick={copyAll}
-          style={{ fontSize: 11, color: copiedAll ? 'var(--accent)' : 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minHeight: 44 }}
-        >
-          {copiedAll ? 'Copied!' : 'Copy all'}
-        </button>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <button
+            onClick={copyAll}
+            style={{ fontSize: 11, color: copiedAll ? 'var(--accent)' : 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minHeight: 44 }}
+          >
+            {copiedAll ? 'Copied!' : 'Copy all'}
+          </button>
+          <InfoTip text="Copies all tailored bullets to your clipboard — paste directly into your CV document." />
+        </span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {bullets.map((bullet, i) => (
@@ -281,6 +288,7 @@ function BulletsColumn({ label, bullets, isAfter, originalBullets }: {
             bullet={bullet}
             original={originalBullets?.[i]}
             isAfter={isAfter}
+            matchedKeywords={matchedKeywords}
           />
         ))}
       </div>
@@ -288,7 +296,7 @@ function BulletsColumn({ label, bullets, isAfter, originalBullets }: {
   )
 }
 
-function BulletRow({ bullet, original, isAfter }: { bullet: string; original?: string; isAfter: boolean }) {
+function BulletRow({ bullet, original, isAfter, matchedKeywords }: { bullet: string; original?: string; isAfter: boolean; matchedKeywords?: string[] }) {
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
@@ -309,7 +317,11 @@ function BulletRow({ bullet, original, isAfter }: { bullet: string; original?: s
           textDecoration: !isAfter ? undefined : undefined,
         }}
       >
-        {isAfter && original ? <DiffText before={original} after={bullet} /> : bullet}
+        {isAfter && original
+          ? bullet === original
+            ? <KeywordHighlight text={bullet} keywords={matchedKeywords ?? []} />
+            : <DiffText before={original} after={bullet} />
+          : bullet}
       </p>
       {isAfter && (
         <button
@@ -339,6 +351,20 @@ function BulletRow({ bullet, original, isAfter }: { bullet: string; original?: s
         </button>
       )}
     </div>
+  )
+}
+
+/* ── Keyword highlight for unchanged bullets ─────────────── */
+function KeywordHighlight({ text, keywords }: { text: string; keywords: string[] }) {
+  if (!keywords.length) return <>{text}</>
+  const pattern = keywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+  const parts = text.split(new RegExp(`(${pattern})`, 'gi'))
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? <span key={i} className="diff-added">{part}</span> : <span key={i}>{part}</span>
+      )}
+    </>
   )
 }
 
@@ -395,9 +421,12 @@ function DiffColumn({ label, text, isAfter, compareWith }: {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
         <span style={{ fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
         {isAfter && (
-          <button onClick={copy} style={{ fontSize: 11, color: copied ? 'var(--accent)' : 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minHeight: 44 }}>
-            {copied ? 'Copied!' : 'Copy'}
-          </button>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <button onClick={copy} style={{ fontSize: 11, color: copied ? 'var(--accent)' : 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minHeight: 44 }}>
+              {copied ? 'Copied!' : 'Copy'}
+            </button>
+            <InfoTip text="Copies the tailored summary to your clipboard — paste directly into your CV document." />
+          </span>
         )}
       </div>
       <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
