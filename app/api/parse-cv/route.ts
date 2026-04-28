@@ -4,6 +4,7 @@ import { ResumeJSON } from '@/lib/schema'
 import { MODELS } from '@/lib/models'
 import { extractJSON } from '@/lib/utils'
 import { isAllowedOrigin, originDenied } from '@/lib/apiGuard'
+import { logTokens } from '@/lib/logTokens'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -134,6 +135,15 @@ export async function POST(req: NextRequest) {
         }
       }
     }
+
+    const usage = geminiResult.response.usageMetadata
+    logTokens({
+      route: 'parse-cv',
+      model: primaryModelName,
+      inputTokens: usage?.promptTokenCount ?? 0,
+      outputTokens: usage?.candidatesTokenCount ?? 0,
+      totalTokens: usage?.totalTokenCount ?? 0,
+    })
 
     const responseText = geminiResult.response.text()
     const jsonText = extractJSON(responseText)

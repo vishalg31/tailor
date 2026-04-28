@@ -4,6 +4,7 @@ import { MODELS } from '@/lib/models'
 import { ATSScore } from '@/lib/schema'
 import { extractJSON } from '@/lib/utils'
 import { isAllowedOrigin, originDenied, MAX_JD_CHARS, MAX_CV_CHARS } from '@/lib/apiGuard'
+import { logTokens } from '@/lib/logTokens'
 
 export const runtime = 'nodejs'
 export const maxDuration = 90
@@ -145,6 +146,15 @@ export async function POST(req: NextRequest) {
         throw err
       }
     }
+
+    const usage = result.response.usageMetadata
+    logTokens({
+      route: 'score-cv',
+      model: modelToUse,
+      inputTokens: usage?.promptTokenCount ?? 0,
+      outputTokens: usage?.candidatesTokenCount ?? 0,
+      totalTokens: usage?.totalTokenCount ?? 0,
+    })
 
     const raw = result.response.text()
 

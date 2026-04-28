@@ -20,6 +20,7 @@ export interface ResumeJsonRecord {
   data: ResumeJSONType
   fileName: string
   fileHash?: string
+  originalScore?: ATSScoreType
   createdAt: number
 }
 
@@ -63,6 +64,13 @@ class TailorDB extends Dexie {
     }).upgrade(tx => tx.table('sessions').clear())
     // v3: add fileHash index to resumeJson for duplicate detection
     this.version(3).stores({
+      sessions: 'sessionId, cvHash, jdHash, updatedAt',
+      resumeJson: 'cvHash, fileHash',
+      tailoredJson: 'jdHash, cvHash',
+      usageCounters: 'sessionId',
+    })
+    // v4: add originalScore to resumeJson for caching across tailor runs
+    this.version(4).stores({
       sessions: 'sessionId, cvHash, jdHash, updatedAt',
       resumeJson: 'cvHash, fileHash',
       tailoredJson: 'jdHash, cvHash',

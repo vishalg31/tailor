@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { MODELS } from '@/lib/models'
 import { isAllowedOrigin, originDenied, MAX_JD_CHARS, MAX_CV_CHARS } from '@/lib/apiGuard'
+import { logTokens } from '@/lib/logTokens'
 import type { ResumeJSONType } from '@/lib/schema'
 
 export const runtime = 'nodejs'
@@ -121,6 +122,14 @@ export async function POST(req: NextRequest) {
             controller.enqueue(encoder.encode(text))
           }
         }
+        const usage = (await result.response).usageMetadata
+        logTokens({
+          route: 'tailor-cv',
+          model: primaryModel,
+          inputTokens: usage?.promptTokenCount ?? 0,
+          outputTokens: usage?.candidatesTokenCount ?? 0,
+          totalTokens: usage?.totalTokenCount ?? 0,
+        })
         console.log('[tailor-cv] Response preview:', fullResponse.slice(0, 300))
         controller.close()
       } catch (err) {

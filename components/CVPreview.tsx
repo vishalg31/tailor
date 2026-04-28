@@ -1,6 +1,7 @@
 'use client'
 
 import type { ResumeJSONType } from '@/lib/schema'
+import { InfoTip } from '@/components/InfoTip'
 
 interface Props {
   resumeJson: ResumeJSONType
@@ -36,13 +37,26 @@ export function CVPreview({ resumeJson, notice, onContinue, onReupload }: Props)
             {[resumeJson.email, resumeJson.phone, resumeJson.location].filter(Boolean).join(' · ')}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 16 }}>
-          <button
-            onClick={() => exportJson(resumeJson)}
-            style={{ fontSize: 13, color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minHeight: 44 }}
-          >
-            Export data
-          </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button
+              onClick={() => exportJson(resumeJson)}
+              style={{
+                fontSize: 13,
+                color: 'var(--accent)',
+                background: 'var(--accent-dim)',
+                border: '1px solid var(--accent)',
+                borderRadius: 6,
+                cursor: 'pointer',
+                padding: '6px 12px',
+                minHeight: 36,
+                fontWeight: 500,
+              }}
+            >
+              Export CV data ↓
+            </button>
+            <InfoTip text="Save your CV data as a JSON file. Re-import it next time to skip parsing and save processing time." />
+          </div>
           <button
             onClick={onReupload}
             style={{ fontSize: 13, color: 'var(--text-tertiary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, minHeight: 44 }}

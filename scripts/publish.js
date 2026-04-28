@@ -14,6 +14,7 @@ const EXCLUDE = [
   'CLAUDE.md',
   'STATUS.md',
   'LEARNINGS.md',
+  'token-usage.csv',
   'gemini api.csv',
   'tsconfig.tsbuildinfo',
   '.git',

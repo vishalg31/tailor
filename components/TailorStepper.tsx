@@ -5,17 +5,19 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { extractJSON, resumeToText } from '@/lib/utils'
 import { TailoredJSON } from '@/lib/schema'
 import type { TailoredJSONType, ATSScoreType, ResumeJSONType } from '@/lib/schema'
+import { db } from '@/lib/db'
 
 type StepState = 'pending' | 'active' | 'done' | 'error'
 
 interface Props {
   resumeJson: ResumeJSONType
+  cvHash: string
   jdText: string
   onComplete: (tailoredJson: TailoredJSONType, originalScore: ATSScoreType | null, tailoredScore: ATSScoreType | null) => void
   onError: (msg: string) => void
 }
 
-export function TailorStepper({ resumeJson, jdText, onComplete, onError }: Props) {
+export function TailorStepper({ resumeJson, cvHash, jdText, onComplete, onError }: Props) {
   const [steps, setSteps] = useState([
     { label: 'Reading your experience...', state: 'active' as StepState },
     { label: 'Tailoring bullets for your CV...', state: 'pending' as StepState },
@@ -124,11 +126,11 @@ export function TailorStepper({ resumeJson, jdText, onComplete, onError }: Props
       )
 
       // Returns null if Gemini daily quota is exhausted — we degrade gracefully rather than blocking results
-      async function fetchScore(cvText: string, includeSuggestions = false): Promise<ATSScoreType | null> {
+      async function fetchScore(cvText: string): Promise<ATSScoreType | null> {
         const res = await fetch('/api/score-cv', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cvText, jdText, includeSuggestions, devModel: devModels.scoring }),
+          body: JSON.stringify({ cvText, jdText, devModel: devModels.scoring }),
           signal: abort.signal,
         })
         if (res.status === 429) return null
@@ -137,7 +139,15 @@ export function TailorStepper({ resumeJson, jdText, onComplete, onError }: Props
         return score
       }
 
-      const originalScore = await fetchScore(originalCvText)
+      // Use cached original score if available — avoids a redundant API call on repeat tailoring
+      const cvRecord = await db.resumeJson.get(cvHash)
+      let originalScore: ATSScoreType | null = cvRecord?.originalScore ?? null
+      if (!originalScore) {
+        originalScore = await fetchScore(originalCvText)
+        if (originalScore) {
+          await db.resumeJson.update(cvHash, { originalScore })
+        }
+      }
 
       if (originalScore === null) {
         // Daily quota hit — show notice but don't block the tailored CV
@@ -149,7 +159,7 @@ export function TailorStepper({ resumeJson, jdText, onComplete, onError }: Props
       }
 
       await delay(1500)
-      const tailoredScore = await fetchScore(tailoredCvText, true)
+      const tailoredScore = await fetchScore(tailoredCvText)
 
       setStepState(2, 'done')
       await delay(300)

@@ -16,6 +16,7 @@ import { SniperView } from '@/components/SniperView'
 import { PDFPreview } from '@/components/PDFPreview'
 import { SessionDashboard } from '@/components/SessionDashboard'
 import { ClearDataButton } from '@/components/ClearDataButton'
+import { InfoTip } from '@/components/InfoTip'
 import { ResumeJSON } from '@/lib/schema'
 import type { ResumeJSONType, TailoredJSONType, ATSScoreType } from '@/lib/schema'
 import type { SessionRecord } from '@/lib/db'
@@ -261,7 +262,10 @@ export default function TailorPage() {
       }
       const json = result.data
       const hash = hashString(JSON.stringify(json))
-      await db.resumeJson.put({ cvHash: hash, data: json, fileName: f.name, createdAt: Date.now() })
+      const existing = await db.resumeJson.get(hash)
+      if (!existing) {
+        await db.resumeJson.put({ cvHash: hash, data: json, fileName: f.name, createdAt: Date.now() })
+      }
       setResumeJson(json)
       setCvHash(hash)
       setTailoredJson(null)
@@ -399,13 +403,25 @@ export default function TailorPage() {
                   {parseError && (
                     <p style={{ fontSize: 12, color: 'var(--error)', marginTop: 8 }}>{parseError}</p>
                   )}
-                  <button
-                    onClick={() => importInputRef.current?.click()}
-                    className="btn-link"
-                    style={{ paddingTop: 12, display: 'block', fontSize: 12 }}
-                  >
-                    Or import saved CV data (.json) →
-                  </button>
+                  <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      onClick={() => importInputRef.current?.click()}
+                      style={{
+                        fontSize: 12,
+                        color: 'var(--text-secondary)',
+                        background: 'none',
+                        border: '1px solid var(--border-strong)',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        padding: '5px 10px',
+                        minHeight: 30,
+                        fontWeight: 500,
+                      }}
+                    >
+                      Import saved CV data (.json) →
+                    </button>
+                    <InfoTip text="Re-import a previously exported CV JSON to skip parsing and save processing time." />
+                  </div>
                   {importError && (
                     <p style={{ fontSize: 12, color: 'var(--error)', marginTop: 8 }}>{importError}</p>
                   )}
@@ -456,6 +472,7 @@ export default function TailorPage() {
           <motion.div key="tailoring" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <TailorStepper
               resumeJson={resumeJson}
+              cvHash={cvHash}
               jdText={jdText}
               onComplete={(tj, os, ts) => handleTailorComplete(tj, os, ts)}
               onError={() => {}}
@@ -495,6 +512,35 @@ export default function TailorPage() {
                   >
                     {showJd ? 'Hide JD ▲' : 'View JD ▼'}
                   </button>
+                )}
+                {resumeJson && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      onClick={() => {
+                        const blob = new Blob([JSON.stringify(resumeJson, null, 2)], { type: 'application/json' })
+                        const url = URL.createObjectURL(blob)
+                        const a = document.createElement('a')
+                        a.href = url
+                        a.download = `${resumeJson.name.replace(/\s+/g, '_')}_CV_data.json`
+                        a.click()
+                        URL.revokeObjectURL(url)
+                      }}
+                      style={{
+                        fontSize: 13,
+                        color: 'var(--accent)',
+                        background: 'var(--accent-dim)',
+                        border: '1px solid var(--accent)',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        padding: '6px 12px',
+                        minHeight: 36,
+                        fontWeight: 500,
+                      }}
+                    >
+                      Export CV data ↓
+                    </button>
+                    <InfoTip text="Save your CV data as a JSON file. Re-import it next time to skip parsing and save processing time." />
+                  </div>
                 )}
                 <button
                   onClick={() => setStep('landing')}
