@@ -107,6 +107,19 @@ export function ParseStepper({ file, onComplete, onError, onBack }: Props) {
       </div>
 
       <AnimatePresence>
+        {steps.some(s => s.state === 'active') && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ParsingAnimation />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {errorMsg && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
@@ -138,6 +151,24 @@ export function ParseStepper({ file, onComplete, onError, onBack }: Props) {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  )
+}
+
+function ParsingAnimation() {
+  const letters = ['P', 'A', 'R', 'S', 'E']
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, height: 72, marginTop: 28, overflow: 'visible' }}>
+      {letters.map((letter, i) => (
+        <motion.span
+          key={i}
+          animate={{ x: [-100, 0, 0, 100], opacity: [0, 1, 1, 0], scale: [0.85, 1, 1, 0.85] }}
+          transition={{ duration: 2.8, delay: i * 0.09, repeat: Infinity, repeatDelay: 0.5, times: [0, 0.28, 0.72, 1], ease: ['easeOut', 'linear', 'easeIn'] }}
+          style={{ fontSize: 40, fontWeight: 700, color: 'var(--accent)', fontFamily: 'var(--font-dm-serif, Georgia, serif)', display: 'inline-block', lineHeight: 1 }}
+        >
+          {letter}
+        </motion.span>
+      ))}
     </div>
   )
 }

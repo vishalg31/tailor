@@ -4,6 +4,7 @@ import type { ResumeJSONType } from '@/lib/schema'
 
 interface Props {
   resumeJson: ResumeJSONType
+  notice?: string | null
   onContinue: () => void
   onReupload: () => void
 }
@@ -18,9 +19,14 @@ function exportJson(resumeJson: ResumeJSONType) {
   URL.revokeObjectURL(url)
 }
 
-export function CVPreview({ resumeJson, onContinue, onReupload }: Props) {
+export function CVPreview({ resumeJson, notice, onContinue, onReupload }: Props) {
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '48px 16px' }}>
+      {notice && (
+        <div style={{ marginBottom: 20, padding: '10px 14px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', borderRadius: 6, fontSize: 13, color: 'var(--accent)' }}>
+          {notice}
+        </div>
+      )}
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 32, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>

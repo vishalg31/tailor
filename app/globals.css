@@ -181,6 +181,7 @@ body {
 
 .serif {
   font-family: var(--font-dm-serif, 'Georgia', serif);
+  font-weight: 700;
 }
 
 /* ── Dividers ─────────────────────────────────────────────── */

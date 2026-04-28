@@ -80,11 +80,18 @@ export function SessionDashboard({ sessions, onResume, onDelete, onRename }: Pro
                       {s.name}
                     </span>
                   )}
-                  {s.company && (
+                  {s.company ? (
                     <>
                       <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>·</span>
                       <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                         {s.role ? `${s.role} at ` : ''}{s.company}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: 12, color: 'var(--border-strong)' }}>·</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                        Not yet tailored
                       </span>
                     </>
                   )}

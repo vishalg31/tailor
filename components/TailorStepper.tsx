@@ -271,10 +271,10 @@ function TailoringAnimation() {
             ease:        ['easeOut', 'linear', 'easeIn'],
           }}
           style={{
-            fontSize:   40,
-            fontWeight: 700,
-            color:      'var(--accent)',
-            fontFamily: 'var(--font-dm-serif, Georgia, serif)',
+            fontSize:     40,
+            fontWeight:   700,
+            color:        'var(--accent)',
+            fontFamily:   'var(--font-dm-serif, Georgia, serif)',
             display:    'inline-block',
             lineHeight: 1,
           }}

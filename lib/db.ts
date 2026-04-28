@@ -19,6 +19,7 @@ export interface ResumeJsonRecord {
   cvHash: string
   data: ResumeJSONType
   fileName: string
+  fileHash?: string
   createdAt: number
 }
 
@@ -35,6 +36,7 @@ export interface TailoredJsonRecord {
 export interface UsageCounter {
   sessionId: string
   count: number
+  parseCount?: number
   date: string
 }
 
@@ -59,6 +61,13 @@ class TailorDB extends Dexie {
       tailoredJson: 'jdHash, cvHash',
       usageCounters: 'sessionId',
     }).upgrade(tx => tx.table('sessions').clear())
+    // v3: add fileHash index to resumeJson for duplicate detection
+    this.version(3).stores({
+      sessions: 'sessionId, cvHash, jdHash, updatedAt',
+      resumeJson: 'cvHash, fileHash',
+      tailoredJson: 'jdHash, cvHash',
+      usageCounters: 'sessionId',
+    })
   }
 }
 

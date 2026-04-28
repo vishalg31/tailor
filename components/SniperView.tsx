@@ -20,7 +20,7 @@ export function SniperView({ resumeJson, tailoredJson, originalScore, tailoredSc
         <h2 style={{
           fontFamily: 'var(--font-dm-serif, Georgia, serif)',
           fontSize: 'clamp(22px, 4vw, 28px)',
-          fontWeight: 400,
+          fontWeight: 700,
           margin: 0,
           color: 'var(--text-primary)',
           lineHeight: 1.2,

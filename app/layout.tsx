@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
-import { DM_Serif_Display } from 'next/font/google'
+import { Gelasio } from 'next/font/google'
 
-const dmSerif = DM_Serif_Display({
-  weight: '400',
+const gelasio = Gelasio({
+  weight: ['400', '600', '700'],
   style: ['normal', 'italic'],
   subsets: ['latin'],
   variable: '--font-dm-serif',
@@ -12,9 +12,8 @@ const dmSerif = DM_Serif_Display({
 })
 import { Analytics } from '@vercel/analytics/react'
 import { ThemeProvider } from '@/components/ThemeProvider'
-import { ThemeToggle } from '@/components/ThemeToggle'
 import { DevModelPanel } from '@/components/DevModelPanel'
-import { NavLogo, NavHomeLink } from '@/components/NavLogo'
+import { NavBar } from '@/components/NavBar'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -32,38 +31,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="light" className={`${GeistSans.variable} ${GeistMono.variable} ${dmSerif.variable}`}>
+    <html lang="en" data-theme="light" className={`${GeistSans.variable} ${GeistMono.variable} ${gelasio.variable}`}>
       <body>
         <ThemeProvider>
           <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            {/* Nav */}
-            <nav style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}>
-              <div style={{
-                maxWidth: 920,
-                margin: '0 auto',
-                padding: '0 20px',
-                height: 44,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-                <NavLogo />
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <nav className="site-nav" aria-label="Site navigation">
-                    <NavHomeLink />
-                    <a href="https://www.vishalbuilds.com/#projects">Products</a>
-                  </nav>
-                  <span className="nav-shield nav-desktop">
-                    <svg width="9" height="11" viewBox="0 0 10 12" fill="none">
-                      <path d="M5 0L0 2.18v3.27C0 8.49 2.13 11.28 5 12c2.87-.72 5-3.51 5-6.55V2.18L5 0z" fill="currentColor" opacity="0.45" />
-                    </svg>
-                    No data saved
-                  </span>
-                  <ThemeToggle />
-                </div>
-              </div>
-            </nav>
+            <NavBar />
 
             {/* Page content */}
             <main style={{ flex: 1 }}>{children}</main>
@@ -85,7 +57,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {' · '}
                 <a href="mailto:vgvishal31@gmail.com">Email</a>
               </p>
-              <p style={{ marginTop: 4 }}>CV processing uses Google AI Studio free tier. Prompts may be used by Google to improve their models.</p>
+              <p style={{ marginTop: 4 }}>Powered by Google AI Studio. Your CV is never stored on our servers.</p>
             </footer>
           </div>
         </ThemeProvider>

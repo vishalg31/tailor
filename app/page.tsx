@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { db } from '@/lib/db'
 import { hashString } from '@/lib/utils'
-import { incrementUsage, checkApiUsage } from '@/lib/checkApiUsage'
+import { incrementUsage, checkApiUsage, checkParseUsage, incrementParseUsage, getResetTimeLocal } from '@/lib/checkApiUsage'
 import { RateLimitBar } from '@/components/RateLimitBar'
 import type { ApiUsageStatus } from '@/lib/checkApiUsage'
 import { DropZone } from '@/components/DropZone'
@@ -35,6 +35,7 @@ export default function TailorPage() {
   const [tailoredScore, setTailoredScore] = useState<ATSScoreType | null>(null)
   const [sessions, setSessions] = useState<SessionRecord[]>([])
   const [usageStatus, setUsageStatus] = useState<ApiUsageStatus | null>(null)
+  const [parseUsageStatus, setParseUsageStatus] = useState<ApiUsageStatus | null>(null)
   const [sessionId] = useState(() => {
     if (typeof window === 'undefined') return crypto.randomUUID()
     const today = new Date().toISOString().slice(0, 10)
@@ -46,7 +47,10 @@ export default function TailorPage() {
     localStorage.setItem('tailor_session_date', today)
     return newId
   })
+  const [fileHash, setFileHash] = useState<string>('')
   const [importError, setImportError] = useState<string | null>(null)
+  const [parseError, setParseError] = useState<string | null>(null)
+  const [cvNotice, setCvNotice] = useState<string | null>(null)
   const [resultNotice, setResultNotice] = useState<string | null>(null)
   const [showJd, setShowJd] = useState(false)
   const importInputRef = useRef<HTMLInputElement>(null)
@@ -82,7 +86,12 @@ export default function TailorPage() {
 
   useEffect(() => {
     checkApiUsage(sessionId).then(setUsageStatus)
+    checkParseUsage(sessionId).then(setParseUsageStatus)
   }, [sessionId])
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [step])
 
   useEffect(() => {
     const handler = () => {
@@ -90,25 +99,69 @@ export default function TailorPage() {
       setResultNotice(null)
       db.sessions.orderBy('updatedAt').reverse().limit(10).toArray().then(setSessions)
       checkApiUsage(sessionId).then(setUsageStatus)
+      checkParseUsage(sessionId).then(setParseUsageStatus)
     }
     window.addEventListener('tailor:go-home', handler)
     return () => window.removeEventListener('tailor:go-home', handler)
   }, [])
 
 
-  const handleFileAccepted = (f: File) => {
-    localStorage.removeItem('tailor_restore')
+  const handleFileAccepted = async (f: File) => {
+    setParseError(null)
+
+    // Hash file bytes to detect duplicate uploads
+    const buffer = await f.arrayBuffer()
+    const bytes = new Uint8Array(buffer)
+    let byteStr = ''
+    const step = Math.max(1, Math.floor(bytes.length / 5000))
+    for (let i = 0; i < bytes.length; i += step) byteStr += bytes[i].toString(16)
+    const fHash = hashString(byteStr + f.size)
+
+    // Already parsed — skip straight to cv-preview
+    const existing = await db.resumeJson.where('fileHash').equals(fHash).first()
+    if (existing) {
+      setResumeJson(existing.data)
+      setCvHash(existing.cvHash)
+      setTailoredJson(null)
+      setJdText('')
+      setCvNotice('CV already parsed — using your saved data.')
+      localStorage.setItem('tailor_restore', JSON.stringify({ cvHash: existing.cvHash }))
+      setStep('cv-preview')
+      return
+    }
+
+    // Check parse rate limit
+    const usage = await checkParseUsage(sessionId)
+    if (usage.status === 'session_blocked') {
+      setParseError('You\'ve reached the 5 CV parse limit for today. Come back tomorrow — your sessions are saved.')
+      return
+    }
+
+    await incrementParseUsage(sessionId)
+    checkParseUsage(sessionId).then(setParseUsageStatus)
+    setFileHash(fHash)
     setFile(f)
     setTailoredJson(null)
     setJdText('')
+    localStorage.removeItem('tailor_restore')
     setStep('parsing')
   }
 
   const handleParseComplete = async (json: ResumeJSONType, hash: string) => {
+    setCvNotice(null)
     setResumeJson(json)
     setCvHash(hash)
-    // Cache parsed CV
-    await db.resumeJson.put({ cvHash: hash, data: json, fileName: file?.name ?? '', createdAt: Date.now() })
+    await db.resumeJson.put({ cvHash: hash, data: json, fileName: file?.name ?? '', fileHash, createdAt: Date.now() })
+    await db.sessions.put({
+      sessionId: hash,
+      name: file?.name ?? json.name,
+      fileName: file?.name ?? '',
+      cvHash: hash,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    })
+    db.sessions.orderBy('updatedAt').reverse().limit(10).toArray().then(setSessions)
+    localStorage.setItem('tailor_restore', JSON.stringify({ cvHash: hash }))
     setStep('cv-preview')
   }
 
@@ -263,7 +316,7 @@ export default function TailorPage() {
                 <h1 style={{
                   fontFamily: 'var(--font-dm-serif, Georgia, serif)',
                   fontSize: 'clamp(32px, 6vw, 44px)',
-                  fontWeight: 400,
+                  fontWeight: 700,
                   lineHeight: 1.15,
                   margin: '0 0 16px',
                   color: 'var(--text-primary)',
@@ -298,7 +351,11 @@ export default function TailorPage() {
                   ))}
                 </div>
 
+                <ParseLimitIndicator status={parseUsageStatus} />
                 <DropZone onFileAccepted={handleFileAccepted} />
+                {parseError && (
+                  <p style={{ fontSize: 12, color: 'var(--error)', marginTop: 8 }}>{parseError}</p>
+                )}
                 <button
                   onClick={() => importInputRef.current?.click()}
                   className="btn-link"
@@ -329,15 +386,19 @@ export default function TailorPage() {
 
                   <h1 style={{
                     fontFamily: 'var(--font-dm-serif, Georgia, serif)',
-                    fontSize: 28, fontWeight: 400,
-                    margin: '0 0 20px', lineHeight: 1.2,
+                    fontSize: 28, fontWeight: 700,
+                      margin: '0 0 20px', lineHeight: 1.2,
                     color: 'var(--text-primary)',
                   }}>
                     Tailor your CV to <em>any job</em> in 60 seconds.
                   </h1>
 
                   <RateLimitBar status={usageStatus} />
+                  <ParseLimitIndicator status={parseUsageStatus} />
                   <DropZone onFileAccepted={handleFileAccepted} />
+                  {parseError && (
+                    <p style={{ fontSize: 12, color: 'var(--error)', marginTop: 8 }}>{parseError}</p>
+                  )}
                   <button
                     onClick={() => importInputRef.current?.click()}
                     className="btn-link"
@@ -372,6 +433,7 @@ export default function TailorPage() {
           <motion.div key="cv-preview" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <CVPreview
               resumeJson={resumeJson}
+              notice={cvNotice}
               onContinue={() => setStep('jd-input')}
               onReupload={() => setStep('landing')}
             />
@@ -487,4 +549,24 @@ export default function TailorPage() {
       </AnimatePresence>
     </div>
   )
+}
+
+function ParseLimitIndicator({ status }: { status: import('@/lib/checkApiUsage').ApiUsageStatus | null }) {
+  if (!status || status.status === 'ok') {
+    const remaining = status?.status === 'ok' ? status.remainingToday : null
+    if (!remaining) return null
+    return (
+      <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 8 }}>
+        {remaining} CV parse{remaining !== 1 ? 's' : ''} remaining this session
+      </p>
+    )
+  }
+  if (status.status === 'warning') {
+    return (
+      <p style={{ fontSize: 12, color: 'var(--warning)', marginBottom: 8 }}>
+        {status.remainingToday} CV parse{status.remainingToday !== 1 ? 's' : ''} left this session — limit resets at {getResetTimeLocal()}.
+      </p>
+    )
+  }
+  return null
 }
