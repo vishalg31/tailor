@@ -360,13 +360,25 @@ export default function TailorPage() {
                 {parseError && (
                   <p style={{ fontSize: 12, color: 'var(--error)', marginTop: 8 }}>{parseError}</p>
                 )}
-                <button
-                  onClick={() => importInputRef.current?.click()}
-                  className="btn-link"
-                  style={{ paddingTop: 12, display: 'block', fontSize: 12 }}
-                >
-                  Or import saved CV data (.json) →
-                </button>
+                <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button
+                    onClick={() => importInputRef.current?.click()}
+                    style={{
+                      fontSize: 12,
+                      color: 'var(--text-secondary)',
+                      background: 'none',
+                      border: '1px solid var(--border-strong)',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      padding: '5px 10px',
+                      minHeight: 30,
+                      fontWeight: 500,
+                    }}
+                  >
+                    Import saved CV data (.json) →
+                  </button>
+                  <InfoTip text="Re-import a previously exported CV JSON to skip parsing and save processing time." />
+                </div>
                 {importError && (
                   <p style={{ fontSize: 12, color: 'var(--error)', marginTop: 8 }}>{importError}</p>
                 )}
