@@ -42,7 +42,7 @@ export function SessionDashboard({ sessions, onResume, onDelete, onRename }: Pro
   return (
     <div style={{ marginTop: 32 }}>
       <p className="eyebrow">Recent sessions</p>
-      <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="panel" style={{ padding: 0 }}>
         {sessions.map((s, i) => (
           <div key={s.sessionId}>
             {/* Main row */}
