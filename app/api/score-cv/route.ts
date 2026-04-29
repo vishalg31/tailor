@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
 
     console.log('[score-cv] Trying primary:', modelToUse)
     let result
+    let actualModel = modelToUse
     try {
       result = await runScore(modelToUse)
       console.log('[score-cv] Primary succeeded:', modelToUse)
@@ -132,11 +133,13 @@ export async function POST(req: NextRequest) {
         console.warn('[score-cv] Primary 503, trying fallback:', MODELS.scoringFallback)
         try {
           result = await runScore(MODELS.scoringFallback)
+          actualModel = MODELS.scoringFallback
           console.log('[score-cv] Fallback succeeded:', MODELS.scoringFallback)
         } catch (fallbackErr) {
           console.warn('[score-cv] Fallback 503, trying backup:', MODELS.scoringBackup)
           try {
             result = await runScore(MODELS.scoringBackup)
+            actualModel = MODELS.scoringBackup
             console.log('[score-cv] Backup succeeded:', MODELS.scoringBackup)
           } catch {
             console.error('[score-cv] All models failed — degrading gracefully')
@@ -151,7 +154,7 @@ export async function POST(req: NextRequest) {
     const usage = result.response.usageMetadata
     logTokens({
       route: 'score-cv',
-      model: modelToUse,
+      model: actualModel,
       inputTokens: usage?.promptTokenCount ?? 0,
       outputTokens: usage?.candidatesTokenCount ?? 0,
       totalTokens: usage?.totalTokenCount ?? 0,

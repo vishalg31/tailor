@@ -108,6 +108,7 @@ export async function POST(req: NextRequest) {
     console.log('[parse-cv] Trying primary:', primaryModelName)
 
     let geminiResult
+    let actualModel = primaryModelName
     try {
       geminiResult = await genAI.getGenerativeModel({ model: primaryModelName }).generateContent(PARSE_PROMPT(rawText))
       console.log('[parse-cv] Primary succeeded:', primaryModelName)
@@ -115,11 +116,13 @@ export async function POST(req: NextRequest) {
       console.warn('[parse-cv] Primary failed, trying fallback:', MODELS.parsingFallback, err)
       try {
         geminiResult = await genAI.getGenerativeModel({ model: MODELS.parsingFallback }).generateContent(PARSE_PROMPT(rawText))
+        actualModel = MODELS.parsingFallback
         console.log('[parse-cv] Fallback succeeded:', MODELS.parsingFallback)
       } catch (fallbackErr) {
         console.warn('[parse-cv] Fallback failed, trying backup:', MODELS.parsingBackup, fallbackErr)
         try {
           geminiResult = await genAI.getGenerativeModel({ model: MODELS.parsingBackup }).generateContent(PARSE_PROMPT(rawText))
+          actualModel = MODELS.parsingBackup
           console.log('[parse-cv] Backup succeeded:', MODELS.parsingBackup)
         } catch (backupErr) {
           console.error('[parse-cv] All models failed:', backupErr)
@@ -139,7 +142,7 @@ export async function POST(req: NextRequest) {
     const usage = geminiResult.response.usageMetadata
     logTokens({
       route: 'parse-cv',
-      model: primaryModelName,
+      model: actualModel,
       inputTokens: usage?.promptTokenCount ?? 0,
       outputTokens: usage?.candidatesTokenCount ?? 0,
       totalTokens: usage?.totalTokenCount ?? 0,

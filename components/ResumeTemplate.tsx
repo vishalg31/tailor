@@ -25,7 +25,6 @@ const s = StyleSheet.create({
   outerBox: {
     border: '1.5pt solid #111111',
     padding: 16,
-    flex: 1,
   },
   name: {
     fontSize: 20,
@@ -107,12 +106,12 @@ export function ResumeDocument({ resumeJson, tailoredJson, compact }: Props) {
   ].filter(Boolean).join(' | ')
 
   // Compact overrides applied via array styles
-  const pageStyle = compact ? [s.page, { fontSize: 9, padding: 14 }] : s.page
-  const outerBoxStyle = compact ? [s.outerBox, { padding: 12 }] : s.outerBox
-  const sectionHeaderStyle = compact ? [s.sectionHeader, { marginTop: 7, fontSize: 9 }] : s.sectionHeader
-  const bulletRowStyle = compact ? [s.bulletRow, { marginBottom: 1 }] : s.bulletRow
-  const bulletDotStyle = compact ? [s.bulletDot, { fontSize: 9 }] : s.bulletDot
-  const bulletTextStyle = compact ? [s.bulletText, { fontSize: 9 }] : s.bulletText
+  const pageStyle = compact ? [s.page, { padding: 14, lineHeight: 1.25 }] : s.page
+  const outerBoxStyle = compact ? [s.outerBox, { padding: 11 }] : s.outerBox
+  const sectionHeaderStyle = compact ? [s.sectionHeader, { marginTop: 4, marginBottom: 3 }] : s.sectionHeader
+  const bulletRowStyle = compact ? [s.bulletRow, { marginBottom: 0 }] : s.bulletRow
+  const bulletDotStyle = compact ? s.bulletDot : s.bulletDot
+  const bulletTextStyle = compact ? s.bulletText : s.bulletText
   const roleBlockStyle = compact ? { marginBottom: 2 } : { marginBottom: 4 }
 
   return (
@@ -121,8 +120,8 @@ export function ResumeDocument({ resumeJson, tailoredJson, compact }: Props) {
         <View style={outerBoxStyle}>
 
           {/* Header */}
-          <Text style={s.name}>{resumeJson.name.toUpperCase()}</Text>
-          <Text style={s.contactLine}>{contact}</Text>
+          <Text style={compact ? [s.name, { marginBottom: 6 }] : s.name}>{resumeJson.name.toUpperCase()}</Text>
+          <Text style={compact ? [s.contactLine, { marginBottom: 6 }] : s.contactLine}>{contact}</Text>
 
           {/* Executive Summary */}
           {tailoredJson.tailoredSummary && (

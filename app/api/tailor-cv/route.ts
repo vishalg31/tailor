@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
       try {
         let result
         const primaryModel = overrideModel ?? MODELS.tailoring
+        let actualModel = primaryModel
         console.log('[tailor-cv] Trying primary:', primaryModel)
         try {
           result = await tryStream(primaryModel)
@@ -104,12 +105,14 @@ export async function POST(req: NextRequest) {
           console.warn('[tailor-cv] Primary 503, trying fallback:', MODELS.tailoringFallback)
           try {
             result = await tryStream(MODELS.tailoringFallback)
+            actualModel = MODELS.tailoringFallback
             console.log('[tailor-cv] Fallback succeeded:', MODELS.tailoringFallback)
           } catch (fallbackErr) {
             const fallbackIs503 = String(fallbackErr).includes('503')
             if (!fallbackIs503) throw fallbackErr
             console.warn('[tailor-cv] Fallback 503, trying backup:', MODELS.tailoringBackup)
             result = await tryStream(MODELS.tailoringBackup)
+            actualModel = MODELS.tailoringBackup
             console.log('[tailor-cv] Backup succeeded:', MODELS.tailoringBackup)
           }
         }
@@ -125,7 +128,7 @@ export async function POST(req: NextRequest) {
         const usage = (await result.response).usageMetadata
         logTokens({
           route: 'tailor-cv',
-          model: primaryModel,
+          model: actualModel,
           inputTokens: usage?.promptTokenCount ?? 0,
           outputTokens: usage?.candidatesTokenCount ?? 0,
           totalTokens: usage?.totalTokenCount ?? 0,
