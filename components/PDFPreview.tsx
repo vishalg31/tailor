@@ -7,6 +7,7 @@ import type { ResumeJSONType, TailoredJSONType } from '@/lib/schema'
 interface Props {
   resumeJson: ResumeJSONType
   tailoredJson: TailoredJSONType
+  matchedKeywords?: string[]
 }
 
 const PDFPreviewInner = dynamic(() => import('./PDFPreviewInner'), {
@@ -23,14 +24,14 @@ const PDFDownloadOnly = dynamic(
   { ssr: false, loading: () => null },
 )
 
-export function PDFPreview({ resumeJson, tailoredJson }: Props) {
+export function PDFPreview({ resumeJson, tailoredJson, matchedKeywords }: Props) {
   const [showPreview, setShowPreview] = useState(false)
 
   return (
     <div>
       {/* Desktop: always show full viewer */}
       <div className="hidden md:block">
-        <PDFPreviewInner resumeJson={resumeJson} tailoredJson={tailoredJson} />
+        <PDFPreviewInner resumeJson={resumeJson} tailoredJson={tailoredJson} matchedKeywords={matchedKeywords} />
       </div>
 
       {/* Mobile: toggle + download */}
@@ -43,10 +44,10 @@ export function PDFPreview({ resumeJson, tailoredJson }: Props) {
           >
             {showPreview ? 'Hide Preview' : 'Show Preview'}
           </button>
-          <PDFDownloadOnly resumeJson={resumeJson} tailoredJson={tailoredJson} />
+          <PDFDownloadOnly resumeJson={resumeJson} tailoredJson={tailoredJson} matchedKeywords={matchedKeywords} />
         </div>
         {showPreview && (
-          <PDFPreviewInner resumeJson={resumeJson} tailoredJson={tailoredJson} />
+          <PDFPreviewInner resumeJson={resumeJson} tailoredJson={tailoredJson} matchedKeywords={matchedKeywords} />
         )}
       </div>
     </div>

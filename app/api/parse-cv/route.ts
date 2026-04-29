@@ -16,6 +16,7 @@ RULES:
 - Extract data exactly as written — do not rephrase, summarise, or improve any content. That happens later.
 - If a field is not present in the CV, return null for optional fields or an empty array for array fields. Never invent data.
 - For experience bullets: extract each bullet or sentence as a separate string in the bullets array. Preserve the original wording exactly.
+- IMPORTANT: PDF text extraction often breaks long bullet points across multiple lines mid-sentence. If a line does not start with a bullet marker (•, -, *, a number) and reads as a continuation of the previous line, JOIN it to the previous bullet — do not treat it as a new bullet. Each bullets array entry must be one complete thought.
 - For multiple roles at the same company, create separate experience entries — one per role.
 - Dates: extract as written (e.g. "Jan 2021", "2019", "Present")
 - If the CV has a summary or objective section, extract it verbatim.

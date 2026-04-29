@@ -9,15 +9,16 @@ import { InfoTip } from '@/components/InfoTip'
 interface Props {
   resumeJson: ResumeJSONType
   tailoredJson: TailoredJSONType
+  matchedKeywords?: string[]
 }
 
-function useOverflowDetect(resumeJson: ResumeJSONType, tailoredJson: TailoredJSONType): boolean {
+function useOverflowDetect(resumeJson: ResumeJSONType, tailoredJson: TailoredJSONType, matchedKeywords?: string[]): boolean {
   const [overflows, setOverflows] = useState(false)
 
   useEffect(() => {
     setOverflows(false)
     let cancelled = false
-    pdf(<ResumeDocument resumeJson={resumeJson} tailoredJson={tailoredJson} compact={false} />)
+    pdf(<ResumeDocument resumeJson={resumeJson} tailoredJson={tailoredJson} compact={false} matchedKeywords={matchedKeywords} />)
       .toBlob()
       .then(async blob => {
         if (cancelled) return
@@ -33,12 +34,12 @@ function useOverflowDetect(resumeJson: ResumeJSONType, tailoredJson: TailoredJSO
   return overflows
 }
 
-function PDFDownloadButtonCore({ resumeJson, tailoredJson, compact }: Props & { compact: boolean }) {
+function PDFDownloadButtonCore({ resumeJson, tailoredJson, compact, matchedKeywords }: Props & { compact: boolean }) {
   const filename = `${resumeJson.name.replace(/\s+/g, '_')}_tailored.pdf`
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
       <PDFDownloadLink
-        document={<ResumeDocument resumeJson={resumeJson} tailoredJson={tailoredJson} compact={compact} />}
+        document={<ResumeDocument resumeJson={resumeJson} tailoredJson={tailoredJson} compact={compact} matchedKeywords={matchedKeywords} />}
         fileName={filename}
         style={{
           display: 'inline-block',
@@ -61,22 +62,21 @@ function PDFDownloadButtonCore({ resumeJson, tailoredJson, compact }: Props & { 
 }
 
 // Standalone mobile download button — auto-applies compact if overflows (no visual toggle needed)
-export function PDFDownloadButton({ resumeJson, tailoredJson }: Props) {
-  const compact = useOverflowDetect(resumeJson, tailoredJson)
-  return <PDFDownloadButtonCore resumeJson={resumeJson} tailoredJson={tailoredJson} compact={compact} />
+export function PDFDownloadButton({ resumeJson, tailoredJson, matchedKeywords }: Props) {
+  const compact = useOverflowDetect(resumeJson, tailoredJson, matchedKeywords)
+  return <PDFDownloadButtonCore resumeJson={resumeJson} tailoredJson={tailoredJson} compact={compact} matchedKeywords={matchedKeywords} />
 }
 
-export default function PDFPreviewInner({ resumeJson, tailoredJson }: Props) {
-  const overflows = useOverflowDetect(resumeJson, tailoredJson)
+export default function PDFPreviewInner({ resumeJson, tailoredJson, matchedKeywords }: Props) {
+  const overflows = useOverflowDetect(resumeJson, tailoredJson, matchedKeywords)
   const [compact, setCompact] = useState(false)
 
-  // Reset compact when content changes
   useEffect(() => { setCompact(false) }, [resumeJson, tailoredJson])
 
   return (
     <div className="glass" style={{ borderRadius: 8, overflow: 'hidden' }}>
       <PDFViewer width="100%" style={{ height: 'clamp(420px, 70vh, 600px)' }} showToolbar={false}>
-        <ResumeDocument resumeJson={resumeJson} tailoredJson={tailoredJson} compact={compact} />
+        <ResumeDocument resumeJson={resumeJson} tailoredJson={tailoredJson} compact={compact} matchedKeywords={matchedKeywords} />
       </PDFViewer>
       <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
@@ -98,7 +98,7 @@ export default function PDFPreviewInner({ resumeJson, tailoredJson }: Props) {
             </button>
           )}
         </div>
-        <PDFDownloadButtonCore resumeJson={resumeJson} tailoredJson={tailoredJson} compact={compact} />
+        <PDFDownloadButtonCore resumeJson={resumeJson} tailoredJson={tailoredJson} compact={compact} matchedKeywords={matchedKeywords} />
       </div>
     </div>
   )

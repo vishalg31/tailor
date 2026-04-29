@@ -12,6 +12,7 @@ interface Props {
   resumeJson: ResumeJSONType
   tailoredJson: TailoredJSONType
   compact: boolean
+  matchedKeywords?: string[]
 }
 
 const s = StyleSheet.create({
@@ -34,7 +35,7 @@ const s = StyleSheet.create({
   },
   contactLine: {
     fontSize: 10,
-    marginBottom: 10,
+    marginBottom: 6,
   },
   sectionHeader: {
     fontFamily: 'Helvetica-Bold',
@@ -96,7 +97,29 @@ function inlineBold(text: string) {
   ))
 }
 
-export function ResumeDocument({ resumeJson, tailoredJson, compact }: Props) {
+const KW_STOP = new Set(['with', 'from', 'that', 'this', 'have', 'been', 'into', 'your', 'their', 'over', 'also', 'when', 'will', 'were', 'each', 'than', 'more', 'using', 'across', 'team', 'work', 'used', 'help', 'within'])
+
+function inlineBoldKeywords(text: string, keywords: string[]) {
+  if (!keywords.length) return inlineBold(text)
+  const clean = sanitizePDF(text)
+  // Match full phrases AND individual words (≥4 chars, non-stop) from multi-word keywords
+  const tokens = new Set<string>()
+  for (const kw of keywords) {
+    tokens.add(kw)
+    for (const word of kw.split(/\s+/)) {
+      if (word.length >= 4 && !KW_STOP.has(word.toLowerCase())) tokens.add(word)
+    }
+  }
+  // Longest first so full phrases take priority over individual words
+  const sorted = [...tokens].sort((a, b) => b.length - a.length)
+  const pattern = sorted.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')
+  const parts = clean.split(new RegExp(`(${pattern})`, 'gi'))
+  return parts.map((part, i) => (
+    <Text key={i} style={i % 2 === 1 ? s.bold : undefined}>{part}</Text>
+  ))
+}
+
+export function ResumeDocument({ resumeJson, tailoredJson, compact, matchedKeywords }: Props) {
 
   const contact = [
     resumeJson.phone,
@@ -139,12 +162,19 @@ export function ResumeDocument({ resumeJson, tailoredJson, compact }: Props) {
                 <Text style={s.roleTitle}>
                   {exp.title}, {exp.company} ({exp.startDate} – {exp.endDate})
                 </Text>
-                {exp.bullets.map((b, j) => (
-                  <View key={j} style={bulletRowStyle}>
-                    <Text style={bulletDotStyle}>•</Text>
-                    <Text style={bulletTextStyle}>{inlineBold(b)}</Text>
-                  </View>
-                ))}
+                {exp.bullets.map((b, j) => {
+                  const hasBold = b.includes('**')
+                  return (
+                    <View key={j} style={bulletRowStyle}>
+                      <Text style={bulletDotStyle}>•</Text>
+                      <Text style={bulletTextStyle}>
+                        {!hasBold && matchedKeywords?.length
+                          ? inlineBoldKeywords(b, matchedKeywords)
+                          : inlineBold(b)}
+                      </Text>
+                    </View>
+                  )
+                })}
               </View>
             ))}
           </View>

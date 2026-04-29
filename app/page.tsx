@@ -600,6 +600,7 @@ export default function TailorPage() {
               <PDFPreview
                 resumeJson={resumeJson}
                 tailoredJson={tailoredJson}
+                matchedKeywords={tailoredScore?.matchedKeywords}
               />
             </div>
           </motion.div>
