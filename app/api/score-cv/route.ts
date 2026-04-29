@@ -126,17 +126,21 @@ export async function POST(req: NextRequest) {
         await new Promise(r => setTimeout(r, wait))
         try {
           result = await runScore(modelToUse)
-        } catch {
-          return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
+          console.log('[score-cv] Retry succeeded:', modelToUse)
+        } catch (retryErr) {
+          console.warn('[score-cv] Retry failed, trying fallback:', MODELS.scoringFallback, retryErr)
+          // fall through to fallback chain below
         }
-      } else if (status === 503) {
-        console.warn('[score-cv] Primary 503, trying fallback:', MODELS.scoringFallback)
+      }
+      if (!result) {
+        // 503, 500, timeout, failed retry — try fallback chain
+        console.warn('[score-cv] Primary failed, trying fallback:', MODELS.scoringFallback)
         try {
           result = await runScore(MODELS.scoringFallback)
           actualModel = MODELS.scoringFallback
           console.log('[score-cv] Fallback succeeded:', MODELS.scoringFallback)
         } catch (fallbackErr) {
-          console.warn('[score-cv] Fallback 503, trying backup:', MODELS.scoringBackup)
+          console.warn('[score-cv] Fallback failed, trying backup:', MODELS.scoringBackup, fallbackErr)
           try {
             result = await runScore(MODELS.scoringBackup)
             actualModel = MODELS.scoringBackup
@@ -146,8 +150,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Scoring unavailable — model overloaded.' }, { status: 429 })
           }
         }
-      } else {
-        throw err
       }
     }
 
