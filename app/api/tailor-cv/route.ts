@@ -8,10 +8,26 @@ import type { ResumeJSONType } from '@/lib/schema'
 export const runtime = 'nodejs'
 export const maxDuration = 120
 
+function annotatedResumeJson(resumeJson: ResumeJSONType): string {
+  const annotated = {
+    ...resumeJson,
+    experience: resumeJson.experience.map(exp => ({
+      ...exp,
+      bullets: exp.bullets.map(b => {
+        const wc = b.trim().split(/\s+/).length
+        const min = Math.floor(wc * 0.8)
+        const max = Math.ceil(wc * 1.1)
+        return `[${min}w–${max}w] ${b}`
+      }),
+    })),
+  }
+  return JSON.stringify(annotated, null, 2)
+}
+
 const TAILOR_PROMPT = (resumeJson: ResumeJSONType, jdText: string) => `You are an expert CV tailoring engine helping professionals apply to competitive roles.
 
 You will be given:
-1. A structured CV in JSON format (ResumeJSON)
+1. A structured CV in JSON format (ResumeJSON) with word-range constraints per bullet
 2. A raw job description
 
 Your task is to rewrite the CV experience and summary to maximise alignment with this specific role.
@@ -27,9 +43,10 @@ STEP 2 — REWRITE RULES:
 - Rewrite bullets to naturally incorporate the identified keywords and align scope/impact with what the JD expects
 - Every bullet must follow STAR method where applicable (Situation/Task → Action → Result)
 - Hard metric required in every bullet — %, $, time, team size, revenue impact. If original has no metric, add a realistic placeholder in [brackets] for the user to fill in
-- Max 200 characters per bullet — never exceed this
+- Each bullet in the RESUME JSON has a word range [Xw–Yw] prefix. The minimum (Xw) is a hard floor — never write fewer words than this. The maximum (Yw) is a soft ceiling — keyword incorporation always takes priority, so you may exceed it if genuinely needed to fit keywords naturally. Do NOT include the [Xw–Yw] prefix in your output.
+- If a bullet does not need changes for this role, copy it exactly as written — do not rephrase, shorten, or expand it
+- Each output bullet must correspond to exactly one original bullet — do not merge two bullets into one, do not split one into two, and do not add bullets not grounded in the original CV
 - Wrap the 2–3 most important keywords or metrics per bullet in **double asterisks** for emphasis
-- Never drop a bullet — if a bullet cannot be improved for this role, copy it unchanged
 - Rewrite the summary to directly address the role's primary requirements in 3–4 sentences
 - Do not fabricate experience, companies, titles, or dates
 
@@ -47,7 +64,7 @@ Return ONLY valid JSON, no markdown, no explanation:
 }
 
 RESUME JSON:
-${JSON.stringify(resumeJson, null, 2)}
+${annotatedResumeJson(resumeJson)}
 
 JOB DESCRIPTION:
 ${jdText}`
