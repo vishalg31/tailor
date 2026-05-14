@@ -8,16 +8,21 @@ import type { ResumeJSONType } from '@/lib/schema'
 export const runtime = 'nodejs'
 export const maxDuration = 120
 
+function sanitizeForPrompt(text: string): string {
+  return text.replace(/₹/g, 'Rs.')
+}
+
 function annotatedResumeJson(resumeJson: ResumeJSONType): string {
   const annotated = {
     ...resumeJson,
     experience: resumeJson.experience.map(exp => ({
       ...exp,
       bullets: exp.bullets.map(b => {
-        const wc = b.trim().split(/\s+/).length
+        const clean = sanitizeForPrompt(b)
+        const wc = clean.trim().split(/\s+/).length
         const min = Math.floor(wc * 0.8)
         const max = Math.ceil(wc * 1.1)
-        return `[${min}w–${max}w] ${b}`
+        return `[${min}w–${max}w] ${clean}`
       }),
     })),
   }
@@ -42,7 +47,7 @@ Before rewriting anything, identify from the JD:
 STEP 2 — REWRITE RULES:
 - Rewrite bullets to naturally incorporate the identified keywords and align scope/impact with what the JD expects
 - Every bullet must follow STAR method where applicable (Situation/Task → Action → Result)
-- Hard metric required in every bullet — %, $, time, team size, revenue impact. If original has no metric, add a realistic placeholder in [brackets] for the user to fill in
+- Include metrics where they exist in the original (%, $, time, team size, revenue impact) — preserve them exactly as written. If the original bullet has no metric, do not invent or add one — write the bullet without a fabricated number
 - Each bullet in the RESUME JSON has a word range [Xw–Yw] prefix. The minimum (Xw) is a hard floor — never write fewer words than this. The maximum (Yw) is a soft ceiling — keyword incorporation always takes priority, so you may exceed it if genuinely needed to fit keywords naturally. Do NOT include the [Xw–Yw] prefix in your output.
 - If a bullet does not need changes for this role, copy it exactly as written — do not rephrase, shorten, or expand it
 - Each output bullet must correspond to exactly one original bullet — do not merge two bullets into one, do not split one into two, and do not add bullets not grounded in the original CV
